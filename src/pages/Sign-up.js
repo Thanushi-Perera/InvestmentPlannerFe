@@ -150,7 +150,7 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = "https://investmentplannerbe-4.onrender.com/register";
+      const url = "https://investmentplannerbe-4.onrender.comapi/v1/auth/register";
       const { data: res } = await axios.post(url, data);
       navigate("/");
       console.log(res.message);

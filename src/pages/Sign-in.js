@@ -112,7 +112,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = "https://investmentplannerbe-4.onrender.com/login";
+      const url = "https://investmentplannerbe-4.onrender.comapi/v1/auth/login";
       const { data: res } = await axios.post(url, data);
       localStorage.setItem("token", res.data);
       navigate("/Dashboard");
