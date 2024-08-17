@@ -5,6 +5,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useGlobalContext } from "../../context/globalContext";
 import Button from "../Button/Button";
 import { plus } from "../../utils/icons";
+import Popup from "../Popup/Popup"; 
+import axios from "axios"; 
 
 function SavingForm() {
   const { addSaving, error, setError } = useGlobalContext();
@@ -16,6 +18,9 @@ function SavingForm() {
     description: "",
   });
 
+  const [recommendations, setRecommendations] = useState("");
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Loading state
   const { title, amount, date, category, description } = inputState;
 
   const handleInput = (name) => (e) => {
@@ -33,6 +38,25 @@ function SavingForm() {
       category: "",
       description: "",
     });
+  };
+
+  const handleGetRecommendations = async () => {
+    setIsLoading(true); // Start loading
+    try {
+      const response = await axios.get(
+        "https://investmentplannerbe-4.onrender.com/api/v1/get-recommendation"
+      );
+      setRecommendations(response.data); // Assuming the API returns a string
+      setIsPopupOpen(true); // Open the popup
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+    } finally {
+      setIsLoading(false); // Stop loading
+    }
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupOpen(false);
   };
 
   return (
@@ -69,7 +93,6 @@ function SavingForm() {
       </div>
       <div className="selects input-control">
         <select
-          required
           value={category}
           name="category"
           id="category"
@@ -105,20 +128,28 @@ function SavingForm() {
           icon={plus}
           bPad={".8rem 1.6rem"}
           bRad={"30px"}
-          bg={"var(--color-accent"}
+          bg={"var(--color-accent)"}
           color={"#fff"}
         />
       </div>
       <div className="gpt-btn">
         <Button
-          name={"Generate Recommendations"}
-          icon={plus}
+          name={isLoading ? "Loading..." : "Generate Recommendations"} // Button text changes on loading
+          icon={isLoading ? null : plus} // Remove icon during loading
           bPad={".8rem 1.6rem"}
           bRad={"30px"}
-          bg={"var(--color-accent"}
+          bg={isLoading ? "#999" : "var(--color-accent)"} // Button color changes during loading
           color={"#fff"}
+          onClick={handleGetRecommendations} 
+          disabled={isLoading || !category} // Disable button during loading or if no category is selected
         />
       </div>
+
+      {/* Popup for Recommendations */}
+      <Popup isOpen={isPopupOpen} onClose={handleClosePopup}>
+        <h2>Saving Recommendations</h2>
+        <p>{recommendations}</p>
+      </Popup>
     </SavingFormStyled>
   );
 }
@@ -171,5 +202,15 @@ const SavingFormStyled = styled.form`
       }
     }
   }
+
+  .gpt-btn {
+    button {
+      box-shadow: 0px 1px 15px rgba(0, 0, 0, 0.06);
+      &:hover {
+        background: var(--color-green) !important;
+      }
+    }
+  }
 `;
+
 export default SavingForm;

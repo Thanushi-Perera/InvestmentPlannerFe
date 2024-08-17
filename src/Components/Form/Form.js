@@ -5,6 +5,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useGlobalContext } from "../../context/globalContext";
 import Button from "../Button/Button";
 import { plus } from "../../utils/icons";
+import Popup from "../Popup/Popup"; 
+import axios from "axios"; 
 
 function Form() {
   const { addIncome, getIncomes, error, setError } = useGlobalContext();
@@ -16,11 +18,33 @@ function Form() {
     description: "",
   });
 
+  const [recommendations, setRecommendations] = useState("");
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Loading state
   const { title, amount, date, category, description } = inputState;
 
   const handleInput = (name) => (e) => {
     setInputState({ ...inputState, [name]: e.target.value });
     setError("");
+  };
+
+  const handleGetRecommendations = async () => {
+    setIsLoading(true); // Start loading
+    try {
+      const response = await axios.get(
+        "https://investmentplannerbe-4.onrender.com/api/v1/get-income-recommendation"
+      );
+      setRecommendations(response.data); 
+      setIsPopupOpen(true); 
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+    } finally {
+      setIsLoading(false); // Stop loading
+    }
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupOpen(false);
   };
 
   const handleSubmit = (e) => {
@@ -69,7 +93,7 @@ function Form() {
       </div>
       <div className="selects input-control">
         <select
-          required
+          //required
           value={category}
           name="category"
           id="category"
@@ -80,7 +104,7 @@ function Form() {
           </option>
           <option value="salary">Salary</option>
           <option value="freelancing">Freelancing</option>
-          <option value="investments">Investiments</option>
+          <option value="investments">Investments</option>
           <option value="stocks">Stocks</option>
           <option value="bitcoin">Bitcoin</option>
           <option value="bank">Bank Transfer</option>
@@ -111,14 +135,21 @@ function Form() {
       </div>
       <div className="gpt-btn">
         <Button
-          name={"Generate Recommendations"}
-          icon={plus}
+          name={isLoading ? "Loading..." : "Generate Recommendations"} // Button text changes on loading
+          icon={isLoading ? null : plus} // Remove icon during loading
           bPad={".8rem 1.6rem"}
           bRad={"30px"}
-          bg={"var(--color-accent"}
+          bg={isLoading ? "#999" : "var(--color-accent"} // Button color changes during loading
           color={"#fff"}
+          onClick={handleGetRecommendations} 
+          disabled={isLoading || !category} // Disable button during loading or if no category is selected
         />
       </div>
+
+      <Popup isOpen={isPopupOpen} onClose={handleClosePopup}>
+        <h2>Income Recommendations</h2>
+        <p>{recommendations}</p>
+      </Popup>
     </FormStyled>
   );
 }

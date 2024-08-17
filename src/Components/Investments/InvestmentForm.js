@@ -5,6 +5,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useGlobalContext } from "../../context/globalContext";
 import Button from "../Button/Button";
 import { plus } from "../../utils/icons";
+import Popup from "../Popup/Popup"; 
+import axios from "axios"; 
 
 function InvestmentForm() {
   const { addInvestment, error, setError } = useGlobalContext();
@@ -16,7 +18,10 @@ function InvestmentForm() {
     description: "",
   });
 
+  const [recommendations, setRecommendations] = useState("");
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { title, amount, date, category, description } = inputState;
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
   const handleInput = (name) => (e) => {
     setInputState({ ...inputState, [name]: e.target.value });
@@ -33,6 +38,25 @@ function InvestmentForm() {
       category: "",
       description: "",
     });
+  };
+
+  const handleGetRecommendations = async () => {
+    setIsLoading(true); // Start loading
+    try {
+      const response = await axios.get(
+        "https://investmentplannerbe-4.onrender.com/api/v1/get-invest-recommendation"
+      );
+      setRecommendations(response.data); // Assuming the API returns a string
+      setIsPopupOpen(true); // Open the popup
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+    } finally {
+      setIsLoading(false); // Stop loading
+    }
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupOpen(false);
   };
 
   return (
@@ -69,7 +93,6 @@ function InvestmentForm() {
       </div>
       <div className="selects input-control">
         <select
-          required
           value={category}
           name="category"
           id="category"
@@ -111,14 +134,22 @@ function InvestmentForm() {
       </div>
       <div className="gpt-btn">
         <Button
-          name={"Generate Recommendations"}
-          icon={plus}
+          name={isLoading ? "Loading..." : "Generate Recommendations"} // Button text changes on loading
+          icon={isLoading ? null : plus} // Remove icon during loading
           bPad={".8rem 1.6rem"}
           bRad={"30px"}
-          bg={"var(--color-accent"}
+          bg={isLoading ? "#999" : "var(--color-accent"} // Button color changes during loading
           color={"#fff"}
+          onClick={handleGetRecommendations} 
+          disabled={isLoading || !category} // Disable button during loading or if no category is selected
         />
       </div>
+
+      {/* Popup for Recommendations */}
+      <Popup isOpen={isPopupOpen} onClose={handleClosePopup}>
+        <h2>Investment Recommendations</h2>
+        <p>{recommendations}</p>
+      </Popup>
     </InvestmentFormStyled>
   );
 }
@@ -172,4 +203,5 @@ const InvestmentFormStyled = styled.form`
     }
   }
 `;
+
 export default InvestmentForm;
